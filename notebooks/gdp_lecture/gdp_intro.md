@@ -175,11 +175,7 @@ print(df_final.to_string(index=False))
 
 ## 1.4 Expenditure Method: Components of GDP vs. GDP Per Capita as Correlations
 
-The collection and preprocessing of the csv files ("gdp_components.csv" and "gdp_components_2.csv") can be found here.
-
-```{code-cell} ipython3
-gdp_components = pd.read_csv('gdp_components_income.csv')
-```
++++
 
 #### 1.4.1 Components of GDP for User-Selected Country
 
@@ -241,6 +237,12 @@ components_of_gdp(country='United States')
 ```
 
 #### 1.4.1 Components of GDP vs. GDP Per Capita as Trends for User-Selected Country
+
+The collection and preprocessing of the csv files ("gdp_components.csv" and "gdp_components_2.csv") can be found here.
+
+```{code-cell} ipython3
+gdp_components = pd.read_csv('gdp_components_income.csv')
+```
 
 ```{code-cell} ipython3
 def components_of_gdp(country):
@@ -374,7 +376,6 @@ ax.set_xlabel('GDP per capita (international $)')
 ax.set_ylabel('GNI per capita (international $)')
 plt.show()
 ```
-
 
 ### 3.3 Health: **Average life expectancy at birth**
 Access the life expectancy data [here](https://ourworldindata.org/grapher/life-expectancy-vs-gdp-per-capita?tab=table&time=2019) from Our World in Data.
