@@ -19,6 +19,7 @@ This lecture will use Python, pandas, and matplotlib to introduce GDP as an econ
 ```{code-cell} ipython3
 !pip install wbgapi
 !pip install pandas-datareader
+!pip install fredapi
 ```
 
 ```{code-cell} ipython3
@@ -35,6 +36,7 @@ import scipy
 import plotly.express as px
 
 import wbgapi as wb
+from fredapi import Fred
 
 import pandas_datareader.data as web
 ```
