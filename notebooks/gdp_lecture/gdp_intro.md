@@ -24,21 +24,24 @@ This lecture will use Python, pandas, and matplotlib to introduce GDP as an econ
 
 ```{code-cell} ipython3
 import os
+import datetime
+from collections import namedtuple
+
+import numpy as np
+import scipy
+
 import pandas as pd
+import pandas_datareader.data as web
+
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import numpy as np
-from collections import namedtuple
-import datetime
-import pandas_datareader.data as web
-import scipy
+import matplotlib.dates as mdates
+from matplotlib.dates import DateFormatter
 
 import plotly.express as px
 
 import wbgapi as wb
 from fredapi import Fred
-
-import pandas_datareader.data as web
 ```
 
 ## What is GDP
@@ -179,43 +182,43 @@ print(df_final.to_string(index=False))
 
 #### 1.4.1 Components of GDP for User-Selected Country
 
-Using FRED API from the Federal Reserve of St. Louis, the following csv file has the components of GDP as a percentage of GDP for the United States. 
+Using FRED API from the Federal Reserve of St. Louis, the following csv file has the components of GDP as a percentage of GDP for the United States. Data can be found [here](https://fred.stlouisfed.org/categories/33020).
 
 ```{code-cell} ipython3
+# Read the CSV file into a DataFrame
 gdp_components = pd.read_csv('gdp_components.csv')
 
-# Select the desired columns
-selected_columns = ["Import Share", "Export Share", "Consumer", "Investment", "Government"]
+# Set "Year" column
+gdp_components.rename(columns={'Unnamed: 0': 'Year'}, inplace=True)
+gdp_components['Year'] = pd.to_datetime(gdp_components['Year'])
 
-# Set the figure size to be 2 times wider
-plt.figure(figsize=(6, 6))
+# Select the desired columns
+selected_columns = ["Import share", "Consumer", "Investment", "Government", "Export share"]
 
 # Set the "Imports" values to negative
-gdp_components["Import Share"] = -gdp_components["Import Share"]
+gdp_components["Import share"] = -gdp_components["Import share"]
 
-# Create a stacked bar chart with adjusted bar width
-ax = gdp_components[selected_columns].plot.bar(stacked=True, width=0.9)
+# Make graph
+plt.figure(figsize=(6, 6))
+ax = gdp_components.plot(x='Year', y=selected_columns, kind='bar', stacked=True, width=0.9)
 
-# Set the chart title and axis labels
 plt.title("GDP Components")
 plt.xlabel("Year")
-plt.ylabel("Value")
+plt.ylabel("GDP/Value")
 
-# Set the x-axis tick marks every 10 years
-years = pd.to_datetime(gdp_components.index).year
-ax.set_xticks(range(0, len(years), 40))
-
-# Rotate the x-axis tick labels by 45 degrees
-ax.set_xticklabels([str(year) for year in years[::40]], ha='right')
-
-# Add horizontal lines at 0 and 100
-ax.axhline(0, color='black', linewidth=2)
-ax.axhline(100, color='black', linewidth=2)
-
-# Move the legend outside and to the right
 ax.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
 
-# Display the chart
+# Once summed, components add up to 1
+ax.axhline(0, color='black', linewidth=2)
+ax.axhline(1, color='black', linewidth=2)
+
+# Set years on the x-axis
+years = gdp_components['Year'].dt.year
+tick_locations = range(0, len(years), 40)
+ax.set_xticks(tick_locations)
+ax.set_xticklabels(years[tick_locations])
+
+plt.xticks(rotation=360)
 plt.show()
 ```
 
@@ -223,7 +226,7 @@ Source: Federal Reserve Economic Data (St. Louis Fed)
 
 #### 1.4.1 Components of GDP vs. GDP Per Capita as Trends for User-Selected Country
 
-Using data from the World Bank, the csv file below has the consumer expenditure, government expenditure, investment expenditure, and net exports expenditure as percentages of GDP for all OECD countries. 
+Using data from the World Bank, the csv file below has the consumer expenditure, government expenditure, investment expenditure, and net exports expenditure as percentages of GDP for all OECD countries. Data on indicators can be found [here](https://data.worldbank.org/indicator) and on country classifications by income [here](https://blogs.worldbank.org/opendata/new-world-bank-group-country-classifications-income-level-fy24).
 
 ```{code-cell} ipython3
 gdp_components = pd.read_csv('gdp_components_income.csv')
