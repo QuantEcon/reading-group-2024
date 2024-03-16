@@ -19,24 +19,29 @@ This lecture will use Python, pandas, and matplotlib to introduce GDP as an econ
 ```{code-cell} ipython3
 !pip install wbgapi
 !pip install pandas-datareader
+!pip install fredapi
 ```
 
 ```{code-cell} ipython3
 import os
+import datetime
+from collections import namedtuple
+
+import numpy as np
+import scipy
+
 import pandas as pd
+import pandas_datareader.data as web
+
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import numpy as np
-from collections import namedtuple
-import datetime
-import pandas_datareader.data as web
-import scipy
+import matplotlib.dates as mdates
+from matplotlib.dates import DateFormatter
 
 import plotly.express as px
 
 import wbgapi as wb
-
-import pandas_datareader.data as web
+from fredapi import Fred
 ```
 
 ## What is GDP
@@ -173,74 +178,59 @@ print(df_final.to_string(index=False))
 
 ## 1.4 Expenditure Method: Components of GDP vs. GDP Per Capita as Correlations
 
-The collection and preprocessing of the csv files ("gdp_components.csv" and "gdp_components_2.csv") can be found here.
-
-```{code-cell} ipython3
-gdp_components = pd.read_csv('gdp_components_income.csv')
-```
++++
 
 #### 1.4.1 Components of GDP for User-Selected Country
 
-```{code-cell} ipython3
-def components_of_gdp(country):
-    df = gdp_components[gdp_components['Country Name'] == country].copy()
-
-    if df['Consumer Expenditure (as % of GDP)'].notnull().any() and \
-       df['Government Expenditure (as % of GDP)'].notnull().any() and \
-       df['Investment Expenditure (as % of GDP)'].notnull().any() and \
-       df['Net Exports Expenditure (as % of GDP)'].notnull().any():
-
-        df['Total Expenditure'] = df['Consumer Expenditure (as % of GDP)'] + \
-                                  df['Government Expenditure (as % of GDP)'] + \
-                                  df['Investment Expenditure (as % of GDP)'] + \
-                                  df['Net Exports Expenditure (as % of GDP)']
-
-        plt.figure(figsize=(10, 6))
-
-        # Plot the stacked bar chart
-        plt.bar(df['Year'], df['Consumer Expenditure (as % of GDP)'], label='Consumer Expenditure')
-        plt.bar(df['Year'], df['Government Expenditure (as % of GDP)'], bottom=df['Consumer Expenditure (as % of GDP)'],
-                label='Government Expenditure')
-        plt.bar(df['Year'], df['Investment Expenditure (as % of GDP)'],
-                bottom=df['Consumer Expenditure (as % of GDP)'] + df['Government Expenditure (as % of GDP)'],
-                label='Investment Expenditure')
-
-        # Plot the negative bars as Trade Deficit
-        net_exports = df['Net Exports Expenditure (as % of GDP)']
-        plt.bar(df['Year'], net_exports.where(net_exports >= 0, 0),
-                bottom=df['Consumer Expenditure (as % of GDP)'] + df['Government Expenditure (as % of GDP)'] +
-                       df['Investment Expenditure (as % of GDP)'],
-                label='Trade Surplus')
-
-        # Plot the positive bars as Trade Surplus
-        plt.bar(df['Year'], net_exports.where(net_exports < 0, 0),
-                bottom=df['Consumer Expenditure (as % of GDP)'] + df['Government Expenditure (as % of GDP)'] +
-                       df['Investment Expenditure (as % of GDP)'] + net_exports.where(net_exports < 0, 0),
-                label='Trade Deficit')
-
-        plt.xlabel('Year')
-        plt.ylabel('Components of GDP (as % of GDP)')
-        plt.title(f'Components of GDP - {country}')
-        plt.legend(loc='upper left')
-
-        #Set x-ticks
-        min_year = df['Year'].min()
-        max_year = df['Year'].max()
-        x_ticks = range(min_year, max_year + 1, 5)
-        plt.xticks(x_ticks, [str(year) for year in x_ticks], rotation=45)
-
-        plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
-
-        plt.show()
-```
+Using FRED API from the Federal Reserve of St. Louis, the following csv file has the components of GDP as a percentage of GDP for the United States. Data can be found [here](https://fred.stlouisfed.org/categories/33020).
 
 ```{code-cell} ipython3
-components_of_gdp(country='United States')
+# Read the CSV file into a DataFrame
+gdp_components = pd.read_csv('gdp_components.csv')
+
+# Set "Year" column
+gdp_components.rename(columns={'Unnamed: 0': 'Year'}, inplace=True)
+gdp_components['Year'] = pd.to_datetime(gdp_components['Year'])
+
+# Select the desired columns
+selected_columns = ["Import share", "Consumer", "Investment", "Government", "Export share"]
+
+# Set the "Imports" values to negative
+gdp_components["Import share"] = -gdp_components["Import share"]
+
+# Make graph
+plt.figure(figsize=(6, 6))
+ax = gdp_components.plot(x='Year', y=selected_columns, kind='bar', stacked=True, width=0.9)
+
+plt.title("GDP Components")
+plt.xlabel("Year")
+plt.ylabel("GDP/Value")
+
+ax.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
+
+# Once summed, components add up to 1
+ax.axhline(0, color='black', linewidth=2)
+ax.axhline(1, color='black', linewidth=2)
+
+# Set years on the x-axis
+years = gdp_components['Year'].dt.year
+tick_locations = range(0, len(years), 40)
+ax.set_xticks(tick_locations)
+ax.set_xticklabels(years[tick_locations])
+
+plt.xticks(rotation=360)
+plt.show()
 ```
+
+Source: Federal Reserve Economic Data (St. Louis Fed)
 
 #### 1.4.1 Components of GDP vs. GDP Per Capita as Trends for User-Selected Country
 
+Using data from the World Bank, the csv file below has the consumer expenditure, government expenditure, investment expenditure, and net exports expenditure as percentages of GDP for all OECD countries. Data on indicators can be found [here](https://data.worldbank.org/indicator) and on country classifications by income [here](https://blogs.worldbank.org/opendata/new-world-bank-group-country-classifications-income-level-fy24).
+
 ```{code-cell} ipython3
+gdp_components = pd.read_csv('gdp_components_income.csv')
+
 def components_of_gdp(country):
     df = gdp_components[gdp_components['Country Name'] == country].copy()
 
@@ -279,6 +269,8 @@ def components_of_gdp(country):
 components_of_gdp(country='United States')
 ```
 
+Source: The World Bank
+
 #### 1.4.2 Components of GDP vs. GDP Per Capita as Correlations for User-Selected Year
 
 ```{code-cell} ipython3
@@ -313,6 +305,8 @@ def plot_gdp_component_scatter(year):
 ```{code-cell} ipython3
 plot_gdp_component_scatter(2018)
 ```
+
+Source: The World Bank
 
 ## 2.0 GDP: Unique Factors
 Now we will explore the correlations between GDP and other socioeconomic, health and technological indicators. GDP per capita is a common proxy for understanding the standards of living in other countries, as economic health often allows other facets of a country's overall health - such as healthcare and education - to flourish. However, GDP in itself does not directly measure many important quality of life metrics such as equality of opportunity, happiness or sustainability, and as such we must be critical when generalising the standards of living in a country from GDP alone.
@@ -372,7 +366,6 @@ ax.set_xlabel('GDP per capita (international $)')
 ax.set_ylabel('GNI per capita (international $)')
 plt.show()
 ```
-
 
 ### 3.3 Health: **Average life expectancy at birth**
 Access the life expectancy data [here](https://ourworldindata.org/grapher/life-expectancy-vs-gdp-per-capita?tab=table&time=2019) from Our World in Data.
