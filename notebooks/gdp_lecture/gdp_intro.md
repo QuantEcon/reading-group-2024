@@ -50,13 +50,20 @@ from fredapi import Fred
 
 Gross Domestic Product (`GDP`) is the primary indicator used to exmine the economic performance of a country, measuring the total market value of all goods and services produced within a country over a specified period.
 
-GDP is usually analysed in two forms: Nominal GDP, which is valued at current market prices, and Real GDP, which is adjusted for inflation to reflect the true economic growth. Nominal GDP can be adjust to Real GDP using the formula: `Real GDP = Nominal GDP x (Price level in base year ÷ Price level in current year)`.
+GDP is usually analysed in two forms: nominal GDP, which is valued at current market prices, and real GDP, which is adjusted for inflation to reflect the true economic growth. Nominal GDP can be adjust to Real GDP using the formula: `real GDP = nominal GDP x (price level in base year ÷ price level in current year)`.
 
-The following graph presents a visual comparison between Nominal GDP and Real GDP per quarter over time in the United States:
+The following graph presents a visual comparison between nominal GDP and real GDP per quarter over time in the United States:
 
 ```{code-cell} ipython3
-start_date = datetime.datetime(1949, 1, 1)
-end_date = datetime.datetime(2023, 10, 1)
+---
+mystnb:
+  figure:
+    caption: 'Nominal vs. real GDP, United States, 1949 - 2023. Source: Federal Reserve
+      Economic Data'
+    name: real_nominal_gdp
+---
+start_date = datetime.datetime(2017, 4, 1)
+end_date = datetime.datetime(2024, 1, 1)
 
 nominal_gdp = web.DataReader('GDP', 'fred', start_date, end_date)
 real_gdp = web.DataReader('GDPC1', 'fred', start_date, end_date)
@@ -65,9 +72,8 @@ plt.figure(figsize=(10, 6))
 plt.plot(nominal_gdp.index, nominal_gdp['GDP'], label='Nominal GDP')
 plt.plot(real_gdp.index, real_gdp['GDPC1'], label='Real GDP', linestyle='--')
 
-plt.title('Nominal vs. Real GDP of US (1949 - 2023)')
 plt.xlabel('Year')
-plt.ylabel('Billions of Dollars / Billions of Chained 2017 Dollars')
+plt.ylabel('Billions of dollars')
 plt.legend()
 plt.show()
 ```
@@ -77,8 +83,8 @@ Source: Federal Reserve Economic Data (St. Louis Fed)
 
 Real GDP is measured in "billions of chained 2017 dollars",which is a dollar measure that is adjusted for the price change due to inflation and consumer behaviour within the year of 2017. Here are some interesting observations:
 
-- Both Nominal and Real GDP displayed increasing trend since 1949.
-- Post-2000, Nominal GDP growth outpaced Real GDP, especially after 2010, indicating inflation's role as a contributing factor.
+- Both nominal and real GDP displayed increasing trend since 2017.
+- Nominal GDP growth outpaced real GDP indicating inflation's role as a contributing factor.
 - 2008 and 2020 saw GDP drops due to the Global Financial Crisis and COVID-19 pandemic, respectively. These crises led to significant GDP contractions, evident in downturns on the graph.
 
 
@@ -91,24 +97,26 @@ GDP per capital is often a more useful indicator of economic well-being and qual
 Consider the following graph of GDP per capita vs. GDP of most countries:
 
 ```{code-cell} ipython3
-wb.series.info(q='GDP')
-```
-
-```{code-cell} ipython3
+---
+mystnb:
+  figure:
+    caption: 'GDP vs. GDP per capita across countries, 2022. Source: The World Bank'
+    name: gdp_plot
+---
 data = pd.read_excel('GDP.xlsx', sheet_name='Full Data')
 
 fig = px.scatter(data, x='GDP per capita', y='GDP',
-                 hover_name='Country Name', title='GDP per capita vs GDP')
+                 hover_name='Country Name')
 
 
 fig.update_layout(
-    xaxis_title="GDP per capita ($ thousands)",
-    yaxis_title="GDP ($ trillians)"
+    xaxis_title="GDP per capita (Thausands of US dollars)",
+    yaxis_title="GDP (Trillions of US dollars)"
 )
 
 
 fig.show()
-```
+````
 
 Source: The World Bank
 
@@ -522,20 +530,27 @@ This oversight means activities harming the environment can actually contribute 
 Consider the following diagram of Temperature Anomaly vs. World GDP
 
 ```{code-cell} ipython3
+---
+mystnb:
+  figure:
+    caption:'GDP per capita vs. Temperature anomaly), 1500 - 2021. Source: Climate
+      Research Unit, Nature Geoscience, and Our World In Data'
+    name: gdp_and_temp_anomaly_plot
+---
 data = pd.read_excel('Global temp.xlsx', sheet_name='Temperature Anomaly')
 
 plt.figure(figsize=(10, 6))
 
 ax1 = plt.gca()
 ax1.plot(data['Year'], data['gdppc'], label='GDP per capita', color='blue', marker='o')
-ax1.set_xlabel('Year')
-ax1.set_ylabel('GDP per Capita', color='blue')
+ax1.plot(data2['Year'], data2['GDP per Capita'], label='GDP per capita', marker='o')
+ax1.set_ylabel('GDP per capita (US dollars)', color='blue')
+ax1.set_ylim(-4000)
 
 ax2 = ax1.twinx()
 ax2.plot(data['Year'], data['Anomaly'], label='Temperature Anomaly', color='red', marker='x')
-ax2.set_ylabel('Temperature Anomaly', color='red')
+ax2.set_ylabel('Temperature anomaly (°C)', color='red')
 
-plt.title('GDP per Capita and Temperature Anomaly vs. Year')
 
 # Show the plot
 plt.show()
@@ -546,15 +561,23 @@ Temperature anomaly measures the difference between the temperature of the curre
 From 1850 to 2023, as GDP per Capita increases the golbal Temperature Anomaly increases as well. The relationship can be seen more clearly by plotting World GDP against Temperature Anomaly:
 
 ```{code-cell} ipython3
+---
+mystnb:
+  figure:
+    caption: 'Temperature anomaly vs. world GDP , 1960 - 2022. Source: The World Bank
+      and National Oceanic and Atmospheric Administration, Earth System Research Laboratory,
+      Global Monitoring Division '
+    name: temp_vs_gdp_plot
+---
 data = pd.read_excel('GDP.xlsx', sheet_name='Temperature')
 
 fig = px.scatter(data, x='World GDP', y='Temperature Anomaly',
-                 hover_name='Year', title='Temperature Anomaly vs. World GDP')
+                 hover_name='Year', title='Temperature anomaly vs. world GDP')
 
 
 fig.update_layout(
-    xaxis_title="GDP ($ trillions)",
-    yaxis_title="Temperature Anomaly(Degree C)",
+    xaxis_title="GDP (Trillions of US dollars)",
+    yaxis_title="Temperature Anomaly (°C)",
     xaxis_gridcolor='lightgrey',
     yaxis_gridcolor='lightgrey',
 )
